@@ -1,7 +1,6 @@
 from  command_runner import runCommand
 import re
 
-synthleaves = False
 distcintConditionals = True
 
 class Nd:
@@ -12,14 +11,12 @@ class Nd:
     
     def __str__(self):
         if not self.left and not self.right:
-            if not synthleaves:
-                return "*"
-            else: 
-                if len(self.data) == 1:
-                    return self.data[0]
-                else: 
-                    return "(and " + ' '.join(self.data) + ")" 
-                
+            return "*"
+            # if len(self.data) == 1:
+            #     return self.data[0]
+            # else: 
+            #     return "(and " + ' '.join(self.data) + ")" 
+            
         else:
             return " ".join(["(ite ", str(self.data),str(self.right),  str(self.left), ")"])
     
@@ -35,12 +32,9 @@ class Node(Nd):
     
 
 class SygusDisjunctive:
-    def __init__(self, cond_pred, eq_pred, pred_data, m, k, cdt="true"):
-        self.cond_pred = cond_pred
-        self.eq_pred = eq_pred
-        
-        self.cond_pred_data = [x[0:m] for x in pred_data]
-        self.eq_pred_data = [x[m:] for x in pred_data]
+    def __init__(self, pred_names, pred_data,  k, cdt="true"):
+        self.cond_pred = pred_names
+        self.cond_pred_data = pred_data
         
         assert(k>0)
         self.k = k
@@ -55,18 +49,9 @@ class SygusDisjunctive:
             for p_itr in self.cond_pred:
                 self.pvariables[k_itr].append('p_'+str(k_itr) + '_' + p_itr)
         
-        if synthleaves:
-            # added
-            self.qvariables = {}
-            for k_itr in range(self.k+1):
-                self.qvariables[k_itr] = []
-                for q_itr in self.eq_pred:
-                    self.qvariables[k_itr].append('q_'+str(k_itr) + '_' + q_itr)
-        
-        
         self.wvariables = [] 
         self.uvariables = []
-        for pred  in self.cond_pred+self.eq_pred:
+        for pred  in self.cond_pred: 
             self.wvariables.append('w_'+pred)
             self.uvariables.append('u_'+pred)
         
@@ -151,15 +136,6 @@ class SygusDisjunctive:
             ret += '\n'.join(self.zip_column('(synth-fun ', value, '() Bool )' )) + '\n'
         return ret
     
-    #added
-    def synth_equalities(self):
-        ret = ''
-        for k, value in self.qvariables.items():
-            ret += '\n'.join(self.zip_column('(synth-fun ', value, '() Bool )' )) + '\n'
-        return ret
-    
-    
-    
     def synth_witness(self):
         return '\n'.join(self.zip_column( '(synth-fun ', self.wvariables, ' () Bool)' ))
     
@@ -169,7 +145,6 @@ class SygusDisjunctive:
     def define_CDT(self):
         ret = "(define-fun cdt (" 
         ret +=  ' '.join([ "( " + x + " Bool)" for x in self.cond_pred])
-        ret +=  ' '.join([ "( " + x + " Bool)" for x in self.eq_pred])
         ret += ") Bool \n " + self.cdt + "\n)\n"  
         return ret
     
@@ -183,13 +158,11 @@ class SygusDisjunctive:
                     ret += ' '.join(list(map(lambda x: "( not " + x + ")", self.pvariables[k_itr][0:p_itr] + self.pvariables[k_itr][p_itr+1:]))) 
                     ret += "))\n"
             
-        all_p_vars = ' '.join( list(map(lambda x: ' '.join(x), [ self.pvariables[i] for i in range(self.k)])))
         ret += '( => ( eval ' + ' '.join(self.uvariables) + ' ' \
-                              + all_p_vars \
                               + ") (cdt " + ' '.join(self.uvariables) + "))\n"
                               
         ret += "(cdt " + ' '.join(self.wvariables) + ")\n"
-        ret += "(not (eval " + " ".join(self.wvariables) + " " + all_p_vars + " ))\n"
+        ret += "(not (eval " + " ".join(self.wvariables) + " ))\n"
         
         
         if distcintConditionals:
@@ -227,7 +200,6 @@ class SygusDisjunctive:
         return  str(
                     self.set_logic() + "\n"
                     + self.synth_conditionals() + "\n"
-                    + ( self.synth_equalities() + "\n" if synthleaves else "" ) #added
                     + self.synth_witness() + "\n"
                     + self.define_CDT() + "\n"
                     + self.declare_universal_variables() + "\n"
@@ -267,33 +239,19 @@ class SygusDisjunctive:
     
     def label_tree(self, root):
         if not root.selectme:
-            
             root.selectme = [ "" for i in range(len(self.cond_pred_data))] 
         
         if not root.left and not root.right:
             root.k = self.q_count
             self.q_count += 1
             
-            if synthleaves:
-                #changed
-                ret = "(and \n"
-                for eq_itr in range(len(self.eq_pred)):
-                    ret += "(=> (not " + self.eq_pred[eq_itr] + " )\n" 
-                    ret += "(and (not q_" + str(root.k) + "_" + self.eq_pred[eq_itr]  + " )\n"  
-                    # ret += "(and q_" + str(root.k) + "_" + self.eq_pred[eq_itr]  + " \n"  
-                    ret += "(or\n"
-                    ret += '\n'.join(self.zip_column('(and', root.selectme, 
-                                        '(not ' ,  [ x[eq_itr] for x in self.eq_pred_data],  '))' ))
-                    ret += "\n)\n)\n)\n"
-                ret += ")\n"
-            else: 
-                ret = "(and \n"
-                for eq_itr in range(len(self.eq_pred)):
-                    ret += "(=> (not " + self.eq_pred[eq_itr] + " )\n(or\n"
-                    ret += '\n'.join(self.zip_column('(and', root.selectme, 
-                                        '(not ' ,  [ x[eq_itr] for x in self.eq_pred_data],  '))' ))
-                    ret += "\n)\n)\n"
-                ret += ")\n"
+            ret = "(and \n"
+            for cond_itr in range(len(self.cond_pred)):
+                ret += "(=> (not " + self.cond_pred[cond_itr] + " )\n(or\n"
+                ret += '\n'.join(self.zip_column('(and', root.selectme, 
+                                    '(not ' ,  [ x[cond_itr] for x in self.cond_pred_data],  '))' ))
+                ret += "\n)\n)\n"
+            ret += ")\n"
             
             root.constraint = ret
         
@@ -325,9 +283,8 @@ class SygusDisjunctive:
     
     
     def generate_eval(self, root):
-        ret= "(define-fun eval (" + ' '.join(["( " + x + " Bool)" for x in self.cond_pred+self.eq_pred]) \
-                                   + ' '.join(["( " + x + " Bool)" for x in [x for  i in range(self.k) for x in self.pvariables[i]]]) \
-                                   + ") Bool\n"
+        ret= str("(define-fun eval (" + ' '.join(["( " + x + " Bool)" for x in self.cond_pred]) 
+                                   + ") Bool\n")
         
         ret += self.tree_to_smt(root) + "\n)\n"
         return ret
@@ -353,22 +310,21 @@ class SygusDisjunctive:
         return None
     
     
-    def project_copy(self, root, predicates_chosen, equalities_chosen=None):
+    def project_copy(self, root, predicates_chosen):
         if not root:
             return None
         
         new_root = Nd()
         
         if not root.left and not root.right:
-            if equalities_chosen:
-                new_root.data = equalities_chosen[root.k]
-            else: 
-                new_root.data = "*"
+            new_root.data = "*"
+            # new_root.data = equalities_chosen[root.k]
+            
             
         else:
             new_root.data = predicates_chosen[root.k]
-            new_root.left = self.project_copy(root.left, predicates_chosen, equalities_chosen)
-            new_root.right = self.project_copy(root.right, predicates_chosen, equalities_chosen)
+            new_root.left = self.project_copy(root.left, predicates_chosen)
+            new_root.right = self.project_copy(root.right, predicates_chosen)
         
         return new_root
     
@@ -400,19 +356,7 @@ class SygusDisjunctive:
                             predicates_chosen[i] = element[0].replace('p_' + str(i) + '_', '')
                             break
                 
-                if synthleaves:
-                    equalities_chosen = {}
-                    for i in range(self.k+1):
-                        equalities_chosen[i] = [] 
-                        for element in soln:
-                            if 'q_' + str(i) + '_' in element[0] and element[1] == 'false':
-                                equalities_chosen[i].append(element[0].replace('q_' + str(i) + '_', ''))
-                                
-                
-                if synthleaves:
-                    new_root = self.project_copy(root, predicates_chosen, equalities_chosen)
-                else: 
-                    new_root = self.project_copy(root, predicates_chosen)
+                new_root = self.project_copy(root, predicates_chosen)
                     
                 return new_root
                 
@@ -425,13 +369,11 @@ class SygusDisjunctive:
 
 def main(): 
     solver1 = SygusDisjunctive(
-                    ["cond1", "cond2", "cond3", "cond4"],
-                    ["eq1", "eq2", "eq3"],
+                    ["cond1", "cond2", "cond3", "cond4", "eq1", "eq2", "eq3"],
                     
                     [["true", "false", "true", "true","true", "false", "true"],
                     ["true", "true", "true", "true","false", "false", "false"]],
                     
-                    m=4,
                     k=2,
                     cdt="true"
                 )
@@ -443,8 +385,7 @@ def main():
     f = "false"
     
     solver2 = SygusDisjunctive(
-                        ["cp1", "cp2", "cp3"],
-                        ["ep1", "ep2", "ep3"],
+                        ["cp1", "cp2", "cp3", "ep1", "ep2", "ep3"],
 
                         [[t,t,f,t,t,f],
                         [f,t,f,t,t,f],
@@ -452,17 +393,15 @@ def main():
                         [t,f,f,t,f,t]
                         ],
                     
-                        m = 3, 
                         k = 1,
-                         cdt = "c1" # no soln
+                        cdt = "c1" # no soln
                         # cdt = "true" # (ite  c2 * * )
                      )
     output_tree = solver2.run_sygus()
     print(output_tree)
     
     solver3 = SygusDisjunctive(
-                        ["cp1", "cp2", "cp3"],
-                        ["ep1", "ep2", "ep3"],
+                        ["cp1", "cp2", "cp3", "ep1", "ep2", "ep3"],
 
                         [[t,t,f,t,t,f],
                         [f,t,f,t,t,f],
@@ -470,7 +409,6 @@ def main():
                         [t,f,f,t,f,t]
                         ],
                 
-                        m=3,
                         k = 1,
                         #  cdt = "c1" # no soln
                         cdt = "true" # (ite  c2 * * )
@@ -479,16 +417,13 @@ def main():
     print(output_tree)
     
     solver4 = SygusDisjunctive(
-                        ['c1', "c2", "c3", "c4", "c5"],
-                        ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'],
+                        ['c1', "c2", "c3", "c4", "c5", 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'],
                         
                         [[t,f,t,t,t,f,t,f,f,t,t],
                          [t,t,f,t,f,f,t,t,f,f,f],
                          [t,t,t,f,f,t,t,f,f,f,t]
                         ], 
                         
-                        
-                        m=5,
                         k = 1,
                         cdt = "true"
     )
@@ -498,14 +433,12 @@ def main():
     
     
     solver5 = SygusDisjunctive( 
-                        ["c1", "c2"],
-                        ["e1", "e2", "e3"],
+                        ["c1", "c2", "e1", "e2", "e3"],
         
                         [[t,f,t,t,f],
-                        [f,f,t,f,t],
+                         [f,f,t,f,t],
                         ],
                         
-                        m=2, 
                         k = 1,
                         cdt = "true"
     )
