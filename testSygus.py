@@ -5,6 +5,7 @@ import time
 import random
 import operator as op
 from functools import reduce
+from itertools import combinations 
 
 
 def ncr(n, r):
