@@ -42,9 +42,9 @@
 
 
 ;; truly universally quantified variables u0, u1, u2
-(declare-const u0 Bool)
-(declare-const u1 Bool)
-(declare-const u2 Bool)
+(declare-var u0 Bool)
+(declare-var u1 Bool)
+(declare-var u2 Bool)
 
 
 ;; Current decision tree
