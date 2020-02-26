@@ -366,90 +366,14 @@ class SygusDisjunctive:
         
         return None
 
-
-def main(): 
-    solver1 = SygusDisjunctive(
-                    ["cond1", "cond2", "cond3", "cond4", "eq1", "eq2", "eq3"],
-                    
-                    [["true", "false", "true", "true","true", "false", "true"],
-                    ["true", "true", "true", "true","false", "false", "false"]],
-                    
-                    k=2,
-                    cdt="true"
-                )
-    
-    output_tree = solver1.run_sygus()
-    print(output_tree)
-    
-    t = "true"
-    f = "false"
-    
-    solver2 = SygusDisjunctive(
-                        ["cp1", "cp2", "cp3", "ep1", "ep2", "ep3"],
-
-                        [[t,t,f,t,t,f],
-                        [f,t,f,t,t,f],
-                        [f,f,t,t,f,f],
-                        [t,f,f,t,f,t]
-                        ],
-                    
-                        k = 1,
-                        cdt = "c1" # no soln
-                        # cdt = "true" # (ite  c2 * * )
-                     )
-    output_tree = solver2.run_sygus()
-    print(output_tree)
-    
-    solver3 = SygusDisjunctive(
-                        ["cp1", "cp2", "cp3", "ep1", "ep2", "ep3"],
-
-                        [[t,t,f,t,t,f],
-                        [f,t,f,t,t,f],
-                        [f,f,t,t,f,f],
-                        [t,f,f,t,f,t]
-                        ],
-                
-                        k = 1,
-                        #  cdt = "c1" # no soln
-                        cdt = "true" # (ite  c2 * * )
-                     )
-    output_tree = solver3.run_sygus()
-    print(output_tree)
-    
-    solver4 = SygusDisjunctive(
-                        ['c1', "c2", "c3", "c4", "c5", 'e1', 'e2', 'e3', 'e4', 'e5', 'e6'],
-                        
-                        [[t,f,t,t,t,f,t,f,f,t,t],
-                         [t,t,f,t,f,f,t,t,f,f,f],
-                         [t,t,t,f,f,t,t,f,f,f,t]
-                        ], 
-                        
-                        k = 1,
-                        cdt = "true"
-    )
-    
-    output_tree = solver4.run_sygus()
-    print(output_tree)
-    
-    
-    solver5 = SygusDisjunctive( 
-                        ["c1", "c2", "e1", "e2", "e3"],
-        
-                        [[t,f,t,t,f],
-                         [f,f,t,f,t],
-                        ],
-                        
-                        k = 1,
-                        cdt = "true"
-    )
-    
-    output_tree = solver5.run_sygus()
-    print(output_tree)
-
-
-main()
-
-
-# p = solver.zip_column(
-#     [[1,2,3],[4,5,6]], "(not",   [[9,8,7],[6,5,4]], ")"     
-# )
+def learnHoudiniString(strFeatures, strFeatureVectors):
+        workList = {key: True for key in range(0, len(strFeatures))}
+        for idx in range(0, len(strFeatures)):
+            for vector in strFeatureVectors:
+                if vector[idx] == "false":
+                    workList[idx] = False
+        terms = []
+        for idx in range(0, len(strFeatures)):
+            if workList[idx]:
+                terms.append(strFeatures[idx])
+        return terms
