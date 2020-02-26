@@ -140,7 +140,7 @@ class SygusDisjunctive:
         return '\n'.join(self.zip_column( '(synth-fun ', self.wvariables, ' () Bool)' ))
     
     def declare_universal_variables(self):
-        return '\n'.join(self.zip_column( '(declare-const ', self.uvariables,  ' Bool)'))
+        return '\n'.join(self.zip_column( '(declare-var ', self.uvariables,  ' Bool)'))
     
     def define_CDT(self):
         ret = "(define-fun cdt (" 
