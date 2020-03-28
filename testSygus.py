@@ -128,7 +128,7 @@ def large_test(strFeature, strFeatureVectors45):
     solver45  = SygusDisjunctive(
         strFeature,
         strFeatureVectors45,
-        k = 2,
+        k = 1,
         cdt = "(and " + " ".join(output) + " )"
         )
     start_time = time.time()
@@ -193,12 +193,7 @@ def large_sample_cdt(strFeature, strFeatureVectors45):
             if output_tree:
                 print("found")
     
-    
-    
-def main(): 
-    
-    small_tests() 
-    
+def large_tests():
     strFeature = ["cond0", "cond1", "cond2", "cond3", "cond4", "cond5", "cond6", "cond7", "cond8", "cond9", "cond10", "cond11", "cond12", "cond13", "cond14", "cond15", "cond16", "cond17", "cond18", "cond19", "cond20", "cond21", "cond22", "cond23", "cond24", "cond25", "cond26", "cond27", "cond28", "cond29", "cond30", "cond31", "cond32", "cond33", "cond34", "cond35", "cond36", "cond37", "cond38", "cond39", "cond40", "cond41", "cond42", "cond43", "cond44", "cond45", "cond46", "cond47", "cond48", "cond49", "cond50", "cond51", "cond52", "cond53", "cond54", "cond55", "cond56", "cond57", "cond58", "cond59", "cond60", "cond61", "cond62", "cond63", "cond64", "cond65", "cond66", "cond67", "cond68", "cond69", "cond70", "cond71", "cond72", "cond73", "cond74", "cond75", "cond76", "cond77", "cond78", "cond79", "cond80", "cond81", "cond82", "cond83", "cond84", "cond85", "cond86", "cond87", "cond88", "cond89", "cond90", "cond91", "cond92", "cond93", "cond94", "cond95", "cond96", "cond97", "cond98", "cond99", "cond100", "cond101", "cond102", "cond103", "cond104", "cond105", "cond106", "cond107", "cond108", "cond109", "cond110"]
     strFeatureVectors45 = [
             ['false', 'true', 'true', 'true', 'true', 'false', 'true', 'false', 'true', 'false', 'false', 'true', 'false', 'true', 'true', 'false', 'true', 'false', 'true', 'false', 'true', 'false', 'true', 'false', 'false', 'true', 'false', 'false', 'true', 'true', 'true', 'true', 'false', 'false', 'false', 'true', 'false', 'true', 'false', 'true', 'false', 'true', 'true', 'true', 'false', 'false', 'true', 'true', 'false', 'false', 'true', 'true', 'false', 'false', 'false', 'false', 'true', 'true', 'false', 'false', 'true', 'true', 'false', 'true', 'false', 'true', 'false', 'false', 'true', 'false', 'true', 'false', 'false', 'false', 'false', 'false', 'false', 'true', 'false', 'false', 'true', 'false', 'false', 'false', 'true', 'true', 'true', 'false', 'true', 'true', 'true', 'true', 'true', 'false', 'false', 'false', 'false', 'false', 'false', 'false', 'false', 'false', 'true', 'true', 'true', 'false', 'false', 'false', 'true', 'true', 'true'],
@@ -251,11 +246,18 @@ def main():
     
     large_test(strFeature, strFeatureVectors45)
     
-    large_sample_breakdown(strFeature, strFeatureVectors45)
+    # large_sample_breakdown(strFeature, strFeatureVectors45)
     
-    large_sample_cdt(strFeature, strFeatureVectors45)
+    # large_sample_cdt(strFeature, strFeatureVectors45)
 
 
+    
+def main(): 
+    
+    # small_tests() 
+    large_tests()
+    
+    
 
 
 main()

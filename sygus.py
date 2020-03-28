@@ -138,6 +138,7 @@ class SygusDisjunctive:
     
     def synth_witness(self):
         return '\n'.join(self.zip_column( '(synth-fun ', self.wvariables, ' () Bool)' ))
+        # return '\n'.join(self.zip_column( '(declare-const ',  self.wvariables,  ' Bool)'))
     
     def declare_universal_variables(self):
         return '\n'.join(self.zip_column( '(declare-var ', self.uvariables,  ' Bool)'))
